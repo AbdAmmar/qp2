@@ -257,10 +257,6 @@ BEGIN_PROVIDER [double precision, SCF_energy]
 
   SCF_energy = nuclear_repulsion
 
-  if(add_elec_field) then
-    SCF_energy = SCF_energy + Int_nuclE
-  endif
-
   do j = 1, ao_num
     do i = 1, ao_num
       SCF_energy += 0.5d0 * ( (ao_one_e_integrals(i,j) + Fock_matrix_ao_alpha(i,j) ) * SCF_density_matrix_ao_alpha(i,j) &

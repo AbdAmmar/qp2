@@ -70,7 +70,7 @@ BEGIN_PROVIDER [double precision, ao_Int_elecE, (ao_num, ao_num)]
           call overlap_gaussian_xyz(A_center, B_center, alpha, beta, power_A, power_B, overlap_x, overlap_y, overlap_z, overlap2, dim1)
           power_A(3) = power_A(3) - 1
 
-          ao_Int_elecE(i,j) = ao_Int_elecE(i,j) - c * (A_center(3) * overlap1 + overlap2)
+          ao_Int_elecE(i,j) = ao_Int_elecE(i,j) + c * (A_center(3) * overlap1 + overlap2)
         enddo
       enddo
     enddo
