@@ -246,22 +246,29 @@ BEGIN_PROVIDER [ double precision, Fock_matrix_ao, (ao_num, ao_num) ]
 END_PROVIDER
 
 
-BEGIN_PROVIDER [ double precision, SCF_energy ]
- implicit none
- BEGIN_DOC
- ! Hartree-Fock energy
- END_DOC
- SCF_energy = nuclear_repulsion
+BEGIN_PROVIDER [double precision, SCF_energy]
 
- integer                        :: i,j
- do j=1,ao_num
-   do i=1,ao_num
-     SCF_energy += 0.5d0 * (                                          &
-         (ao_one_e_integrals(i,j) + Fock_matrix_ao_alpha(i,j) ) *  SCF_density_matrix_ao_alpha(i,j) +&
-         (ao_one_e_integrals(i,j) + Fock_matrix_ao_beta (i,j) ) *  SCF_density_matrix_ao_beta (i,j) )
-   enddo
- enddo
- SCF_energy += extra_e_contrib_density
+  implicit none
+  integer :: i, j
+
+  BEGIN_DOC
+  ! Hartree-Fock energy
+  END_DOC
+
+  SCF_energy = nuclear_repulsion
+
+  if(add_elec_field) then
+    SCF_energy = SCF_energy + Int_nuclE
+  endif
+
+  do j = 1, ao_num
+    do i = 1, ao_num
+      SCF_energy += 0.5d0 * ( (ao_one_e_integrals(i,j) + Fock_matrix_ao_alpha(i,j) ) * SCF_density_matrix_ao_alpha(i,j) &
+                            + (ao_one_e_integrals(i,j) + Fock_matrix_ao_beta (i,j) ) * SCF_density_matrix_ao_beta (i,j) )
+    enddo
+  enddo
+
+  SCF_energy += extra_e_contrib_density
 
 END_PROVIDER
 
