@@ -19,11 +19,7 @@ git submodule init
 git submodule update
 
 # Update ARM or x86 dependencies
-SYSTEM=$(uname -s)
-if [[ $SYSTEM = "Linux" ]] ; then
-  SYSTEM=""
-fi
-ARCHITECTURE=$(uname -m)$SYSTEM
+ARCHITECTURE=$(uname -m)
 cd ${QP_ROOT}/external/qp2-dependencies
 git checkout master
 git pull
@@ -195,7 +191,7 @@ if [[ "${PACKAGES}.x" != ".x" ]] ; then
 fi
 
 if [[ ${PACKAGES} = all ]] ; then
-        PACKAGES="zlib ninja zeromq f77zmq gmp ocaml docopt resultsFile bats trexio"
+        PACKAGES="zlib ninja zeromq f77zmq gmp ocaml docopt resultsFile bats trexio qmckl"
 fi
 
 
@@ -279,7 +275,6 @@ EOF
               cd "\${QP_ROOT}"/external
               tar --gunzip --extract --file qp2-dependencies/zeromq-4.2.5.tar.gz
               cd zeromq-*
-              [[ "${SYSTEM}" = "Darwin" ]] && ./autogen.sh
               ./configure --prefix="\$QP_ROOT" --without-libsodium --enable-libunwind=no
               make -j 8
               make install
@@ -402,11 +397,11 @@ if [[ ${TREXIO} = $(not_found) ]] ; then
         fail
 fi
 
-#QMCKL=$(find_lib -lqmckl)
-#if [[ ${QMCKL} = $(not_found) ]] ; then
-#        error "QMCkl (qmckl | qmckl-intel) is not installed."
-#        fail
-#fi
+QMCKL=$(find_lib -lqmckl)
+if [[ ${QMCKL} = $(not_found) ]] ; then
+        error "QMCkl (qmckl | qmckl-intel) is not installed."
+        fail
+fi
 
 F77ZMQ=$(find_lib -lzmq -lf77zmq -lpthread)
 if [[ ${F77ZMQ} = $(not_found) ]] ; then

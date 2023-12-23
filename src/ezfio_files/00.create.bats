@@ -53,6 +53,7 @@ function run {
 
 
 @test "B-B" {
+  qp set_file b2_stretched.ezfio
   run b2_stretched.zmt 1 0 6-31g
 }
 

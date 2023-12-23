@@ -138,7 +138,7 @@
     allocate( gl(2,4,n_points) )
 
     do ipoint_block = 1, n_points_final_grid, 100  ! r1
-      ipoint_end = min(n_points_final_grid, ipoint_block+99)
+      ipoint_end = min(n_points_final_grid, ipoint_block+100)
 
       k=0
       do ipoint = ipoint_block, ipoint_end
@@ -222,6 +222,8 @@
       enddo
 
     enddo !ipoint_block
+
+
 
     deallocate(gl, rij)
 
