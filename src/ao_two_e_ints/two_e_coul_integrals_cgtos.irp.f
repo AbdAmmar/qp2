@@ -17,14 +17,11 @@ double precision function ao_two_e_integral_cgtos(i, j, k, l)
   integer                    :: ii, jj, kk, ll, dim1, I_power(3), J_power(3), K_power(3), L_power(3)
   integer                    :: iorder_p1(3), iorder_p2(3), iorder_q1(3), iorder_q2(3)
   double precision           :: coef1, coef2, coef3, coef4
-  double precision           :: KI2, phiI
-  double precision           :: KJ2, phiJ
-  double precision           :: KK2, phiK
-  double precision           :: KL2, phiL
-  complex*16                 :: expo1, expo1_inv, Ie_center(3), Ip_center(3)
-  complex*16                 :: expo2, expo2_inv, Je_center(3), Jp_center(3)
-  complex*16                 :: expo3, expo3_inv, Ke_center(3), Kp_center(3)
-  complex*16                 :: expo4, expo4_inv, Le_center(3), Lp_center(3)
+  double precision           :: phiI, phiJ, phiK, phiL
+  complex*16                 :: expo1, expo1_inv, I_center(3)
+  complex*16                 :: expo2, expo2_inv, J_center(3)
+  complex*16                 :: expo3, expo3_inv, K_center(3)
+  complex*16                 :: expo4, expo4_inv, L_center(3)
   complex*16                 :: P1_new(0:max_dim,3), P1_center(3), fact_p1, pp1, p1_inv
   complex*16                 :: P2_new(0:max_dim,3), P2_center(3), fact_p2, pp2, p2_inv
   complex*16                 :: Q1_new(0:max_dim,3), Q1_center(3), fact_q1, qq1, q1_inv
@@ -59,44 +56,39 @@ double precision function ao_two_e_integral_cgtos(i, j, k, l)
     J_power(m) = ao_power(j,m)
     K_power(m) = ao_power(k,m)
     L_power(m) = ao_power(l,m)
+
+    I_center(m) = nucl_coord(ii,m) * (1.d0, 0.d0)
+    J_center(m) = nucl_coord(jj,m) * (1.d0, 0.d0)
+    K_center(m) = nucl_coord(kk,m) * (1.d0, 0.d0)
+    L_center(m) = nucl_coord(ll,m) * (1.d0, 0.d0)
   enddo
 
 
   ao_two_e_integral_cgtos = 0.d0
 
-  if(use_pw .or. ii /= jj .or. kk /= ll .or. jj /= kk) then
+  if(ii /= jj .or. kk /= ll .or. jj /= kk) then
 
     do p = 1, ao_prim_num(i)
 
       coef1 = ao_coef_cgtos_norm_ord_transp(p,i)
       expo1 = ao_expo_cgtos_ord_transp(p,i)
       expo1_inv = (1.d0, 0.d0) / expo1
-      do m = 1, 3
-        Ip_center(m) = nucl_coord(ii,m)
-        Ie_center(m) = nucl_coord(ii,m) - (0.d0, 0.5d0) * expo1_inv * ao_expo_pw_ord_transp(m,p,i)
-      enddo
       phiI = ao_expo_phase_ord_transp(4,p,i)
-      KI2 = ao_expo_pw_ord_transp(4,p,i)
 
       do q = 1, ao_prim_num(j)
 
         coef2 = coef1 * ao_coef_cgtos_norm_ord_transp(q,j)
         expo2 = ao_expo_cgtos_ord_transp(q,j) 
         expo2_inv = (1.d0, 0.d0) / expo2
-        do m = 1, 3
-          Jp_center(m) = nucl_coord(jj,m)
-          Je_center(m) = nucl_coord(jj,m) - (0.d0, 0.5d0) * expo2_inv * ao_expo_pw_ord_transp(m,q,j)
-        enddo
         phiJ = ao_expo_phase_ord_transp(4,q,j)
-        KJ2 = ao_expo_pw_ord_transp(4,q,j)
 
         call give_explicit_cpoly_and_cgaussian(P1_new, P1_center, pp1, fact_p1, iorder_p1, &
-                 expo1, expo2, I_power, J_power, Ie_center, Je_center, Ip_center, Jp_center, dim1)
+                 expo1, expo2, I_power, J_power, I_center, J_center, I_center, J_center, dim1)
 
         p1_inv = (1.d0, 0.d0) / pp1
 
         call give_explicit_cpoly_and_cgaussian(P2_new, P2_center, pp2, fact_p2, iorder_p2, &
-                 conjg(expo1), expo2, I_power, J_power, conjg(Ie_center), Je_center, conjg(Ip_center), Jp_center, dim1)
+                 conjg(expo1), expo2, I_power, J_power, conjg(I_center), J_center, conjg(I_center), J_center, dim1)
 
         p2_inv = (1.d0, 0.d0) / pp2
 
@@ -105,51 +97,33 @@ double precision function ao_two_e_integral_cgtos(i, j, k, l)
           coef3 = coef2 * ao_coef_cgtos_norm_ord_transp(r,k)
           expo3 = ao_expo_cgtos_ord_transp(r,k) 
           expo3_inv = (1.d0, 0.d0) / expo3
-          do m = 1, 3
-            Kp_center(m) = nucl_coord(kk,m)
-            Ke_center(m) = nucl_coord(kk,m) - (0.d0, 0.5d0) * expo3_inv * ao_expo_pw_ord_transp(m,r,k)
-          enddo
           phiK = ao_expo_phase_ord_transp(4,r,k)
-          KK2 = ao_expo_pw_ord_transp(4,r,k)
 
           do s = 1, ao_prim_num(l)
 
             coef4 = coef3 * ao_coef_cgtos_norm_ord_transp(s,l)
             expo4 = ao_expo_cgtos_ord_transp(s,l) 
             expo4_inv = (1.d0, 0.d0) / expo4
-            do m = 1, 3
-              Lp_center(m) = nucl_coord(ll,m)
-              Le_center(m) = nucl_coord(ll,m) - (0.d0, 0.5d0) * expo4_inv * ao_expo_pw_ord_transp(m,s,l)
-            enddo
             phiL = ao_expo_phase_ord_transp(4,s,l)
-            KL2 = ao_expo_pw_ord_transp(4,s,l)
 
             call give_explicit_cpoly_and_cgaussian(Q1_new, Q1_center, qq1, fact_q1, iorder_q1, &
-                     expo3, expo4, K_power, L_power, Ke_center, Le_center, Kp_center, Lp_center, dim1)
+                     expo3, expo4, K_power, L_power, K_center, L_center, K_center, L_center, dim1)
 
             q1_inv = (1.d0, 0.d0) / qq1
 
             call give_explicit_cpoly_and_cgaussian(Q2_new, Q2_center, qq2, fact_q2, iorder_q2, &
-                     conjg(expo3), expo4, K_power, L_power, conjg(Ke_center), Le_center, conjg(Kp_center), Lp_center, dim1)
+                     conjg(expo3), expo4, K_power, L_power, conjg(K_center), L_center, conjg(K_center), L_center, dim1)
 
             q2_inv = (1.d0, 0.d0) / qq2
 
-            C1 = zexp((0.d0, 1.d0) * (-phiI - phiJ - phiK - phiL) &
-                     - 0.25d0 * (expo1_inv * KI2 + expo2_inv * KJ2 + expo3_inv * KK2 + expo4_inv * KL2))
-            C2 = zexp((0.d0, 1.d0) * (-phiI - phiJ + phiK - phiL) &
-                     - 0.25d0 * (expo1_inv * KI2 + expo2_inv * KJ2 + conjg(expo3_inv) * KK2 + expo4_inv * KL2))
-            C3 = zexp((0.d0, 1.d0) * ( phiI - phiJ - phiK - phiL) &
-                     - 0.25d0 * (conjg(expo1_inv) * KI2 + expo2_inv * KJ2 + expo3_inv * KK2 + expo4_inv * KL2))
-            C4 = zexp((0.d0, 1.d0) * ( phiI - phiJ + phiK - phiL) &
-                     - 0.25d0 * (conjg(expo1_inv) * KI2 + expo2_inv * KJ2 + conjg(expo3_inv) * KK2 + expo4_inv * KL2))
-            C5 = zexp((0.d0, 1.d0) * (-phiI + phiJ - phiK - phiL) &
-                     - 0.25d0 * (expo1_inv * KI2 + conjg(expo2_inv) * KJ2 + expo3_inv * KK2 + expo4_inv * KL2))
-            C6 = zexp((0.d0, 1.d0) * (-phiI + phiJ + phiK - phiL) &
-                     - 0.25d0 * (expo1_inv * KI2 + conjg(expo2_inv) * KJ2 + conjg(expo3_inv) * KK2 + expo4_inv * KL2))
-            C7 = zexp((0.d0, 1.d0) * ( phiI + phiJ - phiK - phiL) &
-                     - 0.25d0 * (conjg(expo1_inv) * KI2 + conjg(expo2_inv) * KJ2 + expo3_inv * KK2 + expo4_inv * KL2))
-            C8 = zexp((0.d0, 1.d0) * ( phiI + phiJ + phiK - phiL) &
-                     - 0.25d0 * (conjg(expo1_inv) * KI2 + conjg(expo2_inv) * KJ2 + conjg(expo3_inv) * KK2 + expo4_inv * KL2))
+            C1 = zexp((0.d0, 1.d0) * (-phiI - phiJ - phiK - phiL))
+            C2 = zexp((0.d0, 1.d0) * (-phiI - phiJ + phiK - phiL))
+            C3 = zexp((0.d0, 1.d0) * ( phiI - phiJ - phiK - phiL))
+            C4 = zexp((0.d0, 1.d0) * ( phiI - phiJ + phiK - phiL))
+            C5 = zexp((0.d0, 1.d0) * (-phiI + phiJ - phiK - phiL))
+            C6 = zexp((0.d0, 1.d0) * (-phiI + phiJ + phiK - phiL))
+            C7 = zexp((0.d0, 1.d0) * ( phiI + phiJ - phiK - phiL))
+            C8 = zexp((0.d0, 1.d0) * ( phiI + phiJ + phiK - phiL))
 
             int1 = general_primitive_integral_cgtos(dim1,                &
                      P1_new, P1_center, fact_p1, pp1, p1_inv, iorder_p1, &
@@ -185,7 +159,8 @@ double precision function ao_two_e_integral_cgtos(i, j, k, l)
 
             int_tot = C1 * int1 + C2 * int2 + C3 * int3 + C4 * int4 + C5 * int5 + C6 * int6 + C7 * int7 + C8 * int8
 
-            ao_two_e_integral_cgtos = ao_two_e_integral_cgtos + coef4 * 2.d0 * real(int_tot)
+            ! 0.5d0**4 * (int_tot + conjg(int_tot))
+            ao_two_e_integral_cgtos = ao_two_e_integral_cgtos + coef4 * 0.125d0 * real(int_tot)
           enddo ! s
         enddo ! r
       enddo ! q
@@ -269,7 +244,8 @@ double precision function ao_two_e_integral_cgtos(i, j, k, l)
             int_tot = C1 * int1 + C2 * int2 + C3 * int3 + C4 * int4 &
                     + C5 * int5 + C6 * int6 + C7 * int7 + C8 * int8
 
-            ao_two_e_integral_cgtos = ao_two_e_integral_cgtos + coef4 * 2.d0 * real(int_tot)
+            ! 0.5d0**4 * (int_tot + conjg(int_tot))
+            ao_two_e_integral_cgtos = ao_two_e_integral_cgtos + coef4 * 0.125d0 * real(int_tot)
           enddo ! s
         enddo ! r
       enddo ! q
@@ -297,14 +273,11 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
   integer                       :: ii, jj, kk, ll, dim1, I_power(3), J_power(3), K_power(3), L_power(3)
   integer                       :: iorder_p1(3), iorder_p2(3), iorder_q1(3), iorder_q2(3)
   double precision              :: coef1, coef2, coef3, coef4
-  double precision              :: KI2, phiI
-  double precision              :: KJ2, phiJ
-  double precision              :: KK2, phiK
-  double precision              :: KL2, phiL
-  complex*16                    :: expo1, expo1_inv, Ie_center(3), Ip_center(3)
-  complex*16                    :: expo2, expo2_inv, Je_center(3), Jp_center(3)
-  complex*16                    :: expo3, expo3_inv, Ke_center(3), Kp_center(3)
-  complex*16                    :: expo4, expo4_inv, Le_center(3), Lp_center(3)
+  double precision              :: phiI, phiJ, phiK, phiL
+  complex*16                    :: expo1, expo1_inv, I_center(3)
+  complex*16                    :: expo2, expo2_inv, J_center(3)
+  complex*16                    :: expo3, expo3_inv, K_center(3)
+  complex*16                    :: expo4, expo4_inv, L_center(3)
   complex*16                    :: P1_new(0:max_dim,3), P1_center(3), fact_p1, pp1, p1_inv
   complex*16                    :: P2_new(0:max_dim,3), P2_center(3), fact_p2, pp2, p2_inv
   complex*16                    :: Q1_new(0:max_dim,3), Q1_center(3), fact_q1, qq1, q1_inv
@@ -321,6 +294,7 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
   complex*16, external          :: ERI_cgtos
   complex*16, external          :: general_primitive_integral_cgtos
 
+
   ao_2e_cgtos_schwartz_accel = 0.d0
 
   dim1 = n_pt_max_integrals
@@ -335,6 +309,11 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
     J_power(m) = ao_power(j,m)
     K_power(m) = ao_power(k,m)
     L_power(m) = ao_power(l,m)
+
+    I_center(m) = nucl_coord(ii,m) * (1.d0, 0.d0)
+    J_center(m) = nucl_coord(jj,m) * (1.d0, 0.d0)
+    K_center(m) = nucl_coord(kk,m) * (1.d0, 0.d0)
+    L_center(m) = nucl_coord(ll,m) * (1.d0, 0.d0)
   enddo
 
 
@@ -342,7 +321,7 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
 
   allocate(schwartz_kl(0:ao_prim_num(l),0:ao_prim_num(k)))
 
-  if(use_pw .or. ii /= jj .or. kk /= ll .or. jj /= kk) then
+  if(ii /= jj .or. kk /= ll .or. jj /= kk) then
 
     schwartz_kl(0,0) = 0.d0
     do r = 1, ao_prim_num(k)
@@ -350,12 +329,7 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
       coef1 = ao_coef_cgtos_norm_ord_transp(r,k) * ao_coef_cgtos_norm_ord_transp(r,k)
       expo1 = ao_expo_cgtos_ord_transp(r,k) 
       expo1_inv = (1.d0, 0.d0) / expo1
-      do m = 1, 3
-        Kp_center(m) = nucl_coord(kk,m)
-        Ke_center(m) = nucl_coord(kk,m) - (0.d0, 0.5d0) * expo1_inv * ao_expo_pw_ord_transp(m,r,k)
-      enddo
       phiK = ao_expo_phase_ord_transp(4,r,k)
-      KK2 = ao_expo_pw_ord_transp(4,r,k)
 
       schwartz_kl(0,r) = 0.d0
       do s = 1, ao_prim_num(l)
@@ -363,30 +337,25 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
         coef2 = coef1 * ao_coef_cgtos_norm_ord_transp(s,l) * ao_coef_cgtos_norm_ord_transp(s,l)
         expo2 = ao_expo_cgtos_ord_transp(s,l) 
         expo2_inv = (1.d0, 0.d0) / expo2
-        do m = 1, 3
-          Lp_center(m) = nucl_coord(ll,m)
-          Le_center(m) = nucl_coord(ll,m) - (0.d0, 0.5d0) * expo2_inv * ao_expo_pw_ord_transp(m,s,l)
-        enddo
         phiL = ao_expo_phase_ord_transp(4,s,l)
-        KL2 = ao_expo_pw_ord_transp(4,s,l)
 
         call give_explicit_cpoly_and_cgaussian(P1_new, P1_center, pp1, fact_p1, iorder_p1, &
-                 expo1, expo2, K_power, L_power, Ke_center, Le_center, Kp_center, Lp_center, dim1)
+                 expo1, expo2, K_power, L_power, K_center, L_center, K_center, L_center, dim1)
 
         p1_inv = (1.d0, 0.d0) / pp1
 
         call give_explicit_cpoly_and_cgaussian(P2_new, P2_center, pp2, fact_p2, iorder_p2, &
-                 conjg(expo1), expo2, K_power, L_power, conjg(Ke_center), Le_center, conjg(Kp_center), Lp_center, dim1)
+                 conjg(expo1), expo2, K_power, L_power, conjg(K_center), L_center, conjg(K_center), L_center, dim1)
 
         p2_inv = (1.d0, 0.d0) / pp2
 
-        C1 = zexp(-(0.d0, 2.d0) * (phiK + phiL) - 0.5d0 * (expo1_inv * KK2 + expo2_inv * KL2))
-        C2 = zexp(-(0.d0, 2.d0) * phiL - 0.5d0 * (real(expo1_inv) * KK2 + expo2_inv * KL2))
+        C1 = zexp((0.d0, 1.d0) * (-phiK - phiL - phiK - phiL))
+        C2 = zexp((0.d0, 1.d0) * (      - phiL        - phiL))
         !C3 = C2
-        C4 = zexp((0.d0, 2.d0) * (phiK - phiL) - 0.5d0 * (conjg(expo1_inv) * KK2 + expo2_inv * KL2))
-        C5 = zexp(-(0.d0, 2.d0) * phiK - 0.5d0 * (expo1_inv * KK2 + real(expo2_inv) * KL2))
-        C6 = zexp(-(0.5d0, 0.d0) * (real(expo1_inv) * KK2 + real(expo2_inv) * KL2))
-        !C7 = C6
+        C4 = zexp((0.d0, 1.d0) * ( phiK - phiL + phiK - phiL))
+        C5 = zexp((0.d0, 1.d0) * (-phiK        - phiK       ))
+        !C6 = (1.d0, 0.d0)
+        !C7 = (1.d0, 0.d0)
         !C8 = conjg(C5)
 
         int1 = general_primitive_integral_cgtos(dim1,                &
@@ -424,9 +393,10 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
         !         P2_new, P2_center, fact_p2, pp2, p2_inv, iorder_p2)
 
         !int_tot = C1 * int1 + C2 * int2 + C3 * int3 + C4 * int4 + C5 * int5 + C6 * int6 + C7 * int7 + C8 * int8
-        int_tot = C1 * int1 + 2.d0 * C2 * int2 + C4 * int4 + 2.d0 * real(C5 * int5) + C6 * (int6 + int7)
+        int_tot = C1 * int1 + (2.d0, 0.d0) * C2 * int2 + C4 * int4 + (2.d0, 0.d0) * real(C5 * int5) + int6 + int7
 
-        schwartz_kl(s,r) = coef2 * 2.d0 * real(int_tot)
+        ! 0.5d0**4 * (int_tot + conjg(int_tot))
+        schwartz_kl(s,r) = coef2 * 0.125d0 * real(int_tot)
 
         schwartz_kl(0,r) = max(schwartz_kl(0,r), schwartz_kl(s,r))
       enddo
@@ -440,41 +410,31 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
       coef1 = ao_coef_cgtos_norm_ord_transp(p,i)
       expo1 = ao_expo_cgtos_ord_transp(p,i) 
       expo1_inv = (1.d0, 0.d0) / expo1
-      do m = 1, 3
-        Ip_center(m) = nucl_coord(ii,m)
-        Ie_center(m) = nucl_coord(ii,m) - (0.d0, 0.5d0) * expo1_inv * ao_expo_pw_ord_transp(m,p,i)
-      enddo
       phiI = ao_expo_phase_ord_transp(4,p,i)
-      KI2 = ao_expo_pw_ord_transp(4,p,i)
 
       do q = 1, ao_prim_num(j)
 
         coef2 = coef1 * ao_coef_cgtos_norm_ord_transp(q,j)
         expo2 = ao_expo_cgtos_ord_transp(q,j) 
         expo2_inv = (1.d0, 0.d0) / expo2
-        do m = 1, 3
-          Jp_center(m) = nucl_coord(jj,m)
-          Je_center(m) = nucl_coord(jj,m) - (0.d0, 0.5d0) * expo2_inv * ao_expo_pw_ord_transp(m,q,j)
-        enddo
         phiJ = ao_expo_phase_ord_transp(4,q,j)
-        KJ2 = ao_expo_pw_ord_transp(4,q,j)
 
         call give_explicit_cpoly_and_cgaussian(P1_new, P1_center, pp1, fact_p1, iorder_p1, &
-                 expo1, expo2, I_power, J_power, Ie_center, Je_center, Ip_center, Jp_center, dim1)
+                 expo1, expo2, I_power, J_power, I_center, J_center, I_center, J_center, dim1)
 
         p1_inv = (1.d0, 0.d0) / pp1
 
         call give_explicit_cpoly_and_cgaussian(P2_new, P2_center, pp2, fact_p2, iorder_p2, &
-                 conjg(expo1), expo2, I_power, J_power, conjg(Ie_center), Je_center, conjg(Ip_center), Jp_center, dim1)
+                 conjg(expo1), expo2, I_power, J_power, conjg(I_center), J_center, conjg(I_center), J_center, dim1)
         p2_inv = (1.d0, 0.d0) / pp2
 
-        C1 = zexp(-(0.d0, 2.d0) * (phiI + phiJ) - 0.5d0 * (expo1_inv * KI2 + expo2_inv * KJ2))
-        C2 = zexp(-(0.d0, 2.d0) * phiJ - 0.5d0 * (real(expo1_inv) * KI2 + expo2_inv * KJ2))
+        C1 = zexp((0.d0, 1.d0) * (-phiI - phiJ - phiI - phiJ))
+        C2 = zexp((0.d0, 1.d0) * (      - phiJ        - phiJ))
         !C3 = C2
-        C4 = zexp((0.d0, 2.d0) * (phiI - phiJ) - 0.5d0 * (conjg(expo1_inv) * KI2 + expo2_inv * KJ2))
-        C5 = zexp(-(0.d0, 2.d0) * phiI - 0.5d0 * (expo1_inv * KI2 + real(expo2_inv) * KJ2))
-        C6 = zexp(-(0.5d0, 0.d0) * (real(expo1_inv) * KI2 + real(expo2_inv) * KJ2))
-        !C7 = C6
+        C4 = zexp((0.d0, 1.d0) * ( phiI - phiJ + phiI - phiJ))
+        C5 = zexp((0.d0, 1.d0) * (-phiI        - phiI       ))
+        !C6 = (1.d0, 0.d0)
+        !C7 = (1.d0, 0.d0)
         !C8 = conjg(C5)
 
         int1 = general_primitive_integral_cgtos(dim1,                &
@@ -512,9 +472,10 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
         !         P2_new, P2_center, fact_p2, pp2, p2_inv, iorder_p2)
 
         !int_tot = C1 * int1 + C2 * int2 + C3 * int3 + C4 * int4 + C5 * int5 + C6 * int6 + C7 * int7 + C8 * int8
-        int_tot = C1 * int1 + 2.d0 * C2 * int2 + C4 * int4 + 2.d0 * real(C5 * int5) + C6 * (int6 + int7)
+        int_tot = C1 * int1 + (2.d0, 0.d0) * C2 * int2 + C4 * int4 + (2.d0, 0.d0) * real(C5 * int5) + int6 + int7
 
-        schwartz_ij = coef2 * coef2 * 2.d0 * real(int_tot)
+        ! 0.5d0**4 * (int_tot + conjg(int_tot))
+        schwartz_ij = coef2 * coef2 * 0.125d0 * real(int_tot)
 
         if(schwartz_kl(0,0)*schwartz_ij < thr) cycle
 
@@ -524,12 +485,7 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
           coef3 = coef2 * ao_coef_cgtos_norm_ord_transp(r,k)
           expo3 = ao_expo_cgtos_ord_transp(r,k)
           expo3_inv = (1.d0, 0.d0) / expo3
-          do m = 1, 3
-            Kp_center(m) = nucl_coord(kk,m)
-            Ke_center(m) = nucl_coord(kk,m) - (0.d0, 0.5d0) * expo3_inv * ao_expo_pw_ord_transp(m,r,k)
-          enddo
           phiK = ao_expo_phase_ord_transp(4,r,k)
-          KK2 = ao_expo_pw_ord_transp(4,r,k)
 
           do s = 1, ao_prim_num(l)
             if(schwartz_kl(s,r)*schwartz_ij < thr) cycle
@@ -537,39 +493,26 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
             coef4 = coef3 * ao_coef_cgtos_norm_ord_transp(s,l)
             expo4 = ao_expo_cgtos_ord_transp(s,l)
             expo4_inv = (1.d0, 0.d0) / expo4
-            do m = 1, 3
-              Lp_center(m) = nucl_coord(ll,m)
-              Le_center(m) = nucl_coord(ll,m) - (0.d0, 0.5d0) * expo4_inv * ao_expo_pw_ord_transp(m,s,l)
-            enddo
             phiL = ao_expo_phase_ord_transp(4,s,l)
-            KL2 = ao_expo_pw_ord_transp(4,s,l)
 
             call give_explicit_cpoly_and_cgaussian(Q1_new, Q1_center, qq1, fact_q1, iorder_q1, &
-                     expo3, expo4, K_power, L_power, Ke_center, Le_center, Kp_center, Lp_center, dim1)
+                     expo3, expo4, K_power, L_power, K_center, L_center, K_center, L_center, dim1)
 
             q1_inv = (1.d0, 0.d0) / qq1
 
             call give_explicit_cpoly_and_cgaussian(Q2_new, Q2_center, qq2, fact_q2, iorder_q2, &
-                     conjg(expo3), expo4, K_power, L_power, conjg(Ke_center), Le_center, conjg(Kp_center), Lp_center, dim1)
+                     conjg(expo3), expo4, K_power, L_power, conjg(K_center), L_center, conjg(K_center), L_center, dim1)
 
             q2_inv = (1.d0, 0.d0) / qq2
 
-            C1 = zexp((0.d0, 1.d0) * (-phiI - phiJ - phiK - phiL) &
-                     - 0.25d0 * (expo1_inv * KI2 + expo2_inv * KJ2 + expo3_inv * KK2 + expo4_inv * KL2))
-            C2 = zexp((0.d0, 1.d0) * (-phiI - phiJ + phiK - phiL) &
-                     - 0.25d0 * (expo1_inv * KI2 + expo2_inv * KJ2 + conjg(expo3_inv) * KK2 + expo4_inv * KL2))
-            C3 = zexp((0.d0, 1.d0) * ( phiI - phiJ - phiK - phiL) &
-                     - 0.25d0 * (conjg(expo1_inv) * KI2 + expo2_inv * KJ2 + expo3_inv * KK2 + expo4_inv * KL2))
-            C4 = zexp((0.d0, 1.d0) * ( phiI - phiJ + phiK - phiL) &
-                     - 0.25d0 * (conjg(expo1_inv) * KI2 + expo2_inv * KJ2 + conjg(expo3_inv) * KK2 + expo4_inv * KL2))
-            C5 = zexp((0.d0, 1.d0) * (-phiI + phiJ - phiK - phiL) &
-                     - 0.25d0 * (expo1_inv * KI2 + conjg(expo2_inv) * KJ2 + expo3_inv * KK2 + expo4_inv * KL2))
-            C6 = zexp((0.d0, 1.d0) * (-phiI + phiJ + phiK - phiL) &
-                     - 0.25d0 * (expo1_inv * KI2 + conjg(expo2_inv) * KJ2 + conjg(expo3_inv) * KK2 + expo4_inv * KL2))
-            C7 = zexp((0.d0, 1.d0) * ( phiI + phiJ - phiK - phiL) &
-                     - 0.25d0 * (conjg(expo1_inv) * KI2 + conjg(expo2_inv) * KJ2 + expo3_inv * KK2 + expo4_inv * KL2))
-            C8 = zexp((0.d0, 1.d0) * ( phiI + phiJ + phiK - phiL) &
-                     - 0.25d0 * (conjg(expo1_inv) * KI2 + conjg(expo2_inv) * KJ2 + conjg(expo3_inv) * KK2 + expo4_inv * KL2))
+            C1 = zexp((0.d0, 1.d0) * (-phiI - phiJ - phiK - phiL))
+            C2 = zexp((0.d0, 1.d0) * (-phiI - phiJ + phiK - phiL))
+            C3 = zexp((0.d0, 1.d0) * ( phiI - phiJ - phiK - phiL))
+            C4 = zexp((0.d0, 1.d0) * ( phiI - phiJ + phiK - phiL))
+            C5 = zexp((0.d0, 1.d0) * (-phiI + phiJ - phiK - phiL))
+            C6 = zexp((0.d0, 1.d0) * (-phiI + phiJ + phiK - phiL))
+            C7 = zexp((0.d0, 1.d0) * ( phiI + phiJ - phiK - phiL))
+            C8 = zexp((0.d0, 1.d0) * ( phiI + phiJ + phiK - phiL))
 
             int1 = general_primitive_integral_cgtos(dim1,                &
                      P1_new, P1_center, fact_p1, pp1, p1_inv, iorder_p1, &
@@ -605,7 +548,8 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
 
             int_tot = C1 * int1 + C2 * int2 + C3 * int3 + C4 * int4 + C5 * int5 + C6 * int6 + C7 * int7 + C8 * int8
 
-            ao_2e_cgtos_schwartz_accel = ao_2e_cgtos_schwartz_accel + coef4 * 2.d0 * real(int_tot)
+            ! 0.5d0**4 * (int_tot + conjg(int_tot))
+            ao_2e_cgtos_schwartz_accel = ao_2e_cgtos_schwartz_accel + coef4 * 0.125d0 * real(int_tot)
           enddo ! s
         enddo ! r
       enddo ! q
@@ -627,13 +571,13 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
         expo2 = ao_expo_cgtos_ord_transp(s,l)
         phiL = ao_expo_phase_ord_transp(4,s,l)
 
-        C1 = zexp(-(0.d0, 2.d0) * (phiK + phiL))
-        C2 = zexp(-(0.d0, 2.d0) * phiL)
+        C1 = zexp((0.d0, 1.d0) * (-phiK - phiL - phiK - phiL))
+        C2 = zexp((0.d0, 1.d0) * (      - phiL        - phiL))
         !C3 = C2
-        C4 = zexp((0.d0, 2.d0) * (phiK - phiL))
-        C5 = zexp(-(0.d0, 2.d0) * phiK)
-        C6 = (1.d0, 0.d0)
-        !C7 = C6
+        C4 = zexp((0.d0, 1.d0) * ( phiK - phiL + phiK - phiL))
+        C5 = zexp((0.d0, 1.d0) * (-phiK        - phiK       ))
+        !C6 = (1.d0, 0.d0)
+        !C7 = (1.d0, 0.d0)
         !C8 = conjg(C5)
 
         int1 = ERI_cgtos(expo1, expo2, expo1, expo2,                     &
@@ -679,9 +623,10 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
         !                 K_power(3), L_power(3), K_power(3), L_power(3))
 
         !int_tot = C1 * int1 + C2 * int2 + C3 * int3 + C4 * int4 + C5 * int5 + C6 * int6 + C7 * int7 + C8 * int8
-        int_tot = C1 * int1 + 2.d0 * C2 * int2 + C4 * int4 + 2.d0 * real(C5 * int5) + C6 * (int6 + int7)
+        int_tot = C1 * int1 + (2.d0, 0.d0) * C2 * int2 + C4 * int4 + (2.d0, 0.d0) * real(C5 * int5) + int6 + int7
 
-        schwartz_kl(s,r) = coef2 * 2.d0 * real(int_tot)
+        ! 0.5d0**4 * (int_tot + conjg(int_tot))
+        schwartz_kl(s,r) = coef2 * 0.125d0 * real(int_tot)
 
         schwartz_kl(0,r) = max(schwartz_kl(0,r), schwartz_kl(s,r))
       enddo
@@ -700,13 +645,13 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
         expo2 = ao_expo_cgtos_ord_transp(q,j) 
         phiJ = ao_expo_phase_ord_transp(4,q,j)
 
-        C1 = zexp(-(0.d0, 2.d0) * (phiI + phiJ))
-        C2 = zexp(-(0.d0, 2.d0) * phiJ)
+        C1 = zexp((0.d0, 1.d0) * (-phiI - phiJ - phiI - phiJ))
+        C2 = zexp((0.d0, 1.d0) * (      - phiJ        - phiJ))
         !C3 = C2
-        C4 = zexp((0.d0, 2.d0) * (phiI - phiJ))
-        C5 = zexp(-(0.d0, 2.d0) * phiI)
-        C6 = (1.d0, 0.d0)
-        !C7 = C6
+        C4 = zexp((0.d0, 1.d0) * ( phiI - phiJ + phiI - phiJ))
+        C5 = zexp((0.d0, 1.d0) * (-phiI        - phiI       ))
+        !C6 = (1.d0, 0.d0)
+        !C7 = (1.d0, 0.d0)
         !C8 = conjg(C5)
 
         int1 = ERI_cgtos(expo1, expo2, expo1, expo2,                     &
@@ -752,9 +697,10 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
         !                 I_power(3), J_power(3), I_power(3), J_power(3))
 
         !int_tot = C1 * int1 + C2 * int2 + C3 * int3 + C4 * int4 + C5 * int5 + C6 * int6 + C7 * int7 + C8 * int8
-        int_tot = C1 * int1 + 2.d0 * C2 * int2 + C4 * int4 + 2.d0 * real(C5 * int5) + C6 * (int6 + int7)
+        int_tot = C1 * int1 + (2.d0, 0.d0) * C2 * int2 + C4 * int4 + (2.d0, 0.d0) * real(C5 * int5) + int6 + int7
 
-        schwartz_ij = coef2 * coef2 * 2.d0 * real(int_tot)
+        ! 0.5d0**4 * (int_tot + conjg(int_tot))
+        schwartz_ij = coef2 * coef2 * 0.125d0 * real(int_tot)
 
         if(schwartz_kl(0,0)*schwartz_ij < thr) cycle
         do r = 1, ao_prim_num(k)
@@ -822,7 +768,8 @@ double precision function ao_2e_cgtos_schwartz_accel(i, j, k, l)
 
             int_tot = C1 * int1 + C2 * int2 + C3 * int3 + C4 * int4 + C5 * int5 + C6 * int6 + C7 * int7 + C8 * int8
 
-            ao_2e_cgtos_schwartz_accel = ao_2e_cgtos_schwartz_accel + coef4 * 2.d0 * real(int_tot)
+            ! 0.5d0**4 * (int_tot + conjg(int_tot))
+            ao_2e_cgtos_schwartz_accel = ao_2e_cgtos_schwartz_accel + coef4 * 0.125d0 * real(int_tot)
           enddo ! s
         enddo  ! r
       enddo   ! q
@@ -836,31 +783,31 @@ end
 
 ! ---
 
-BEGIN_PROVIDER [double precision, ao_2e_cgtos_schwartz, (ao_num, ao_num)]
-
-  BEGIN_DOC
-  !  Needed to compute Schwartz inequalities
-  END_DOC
-
-  implicit none
-  integer          :: i, k
-  double precision :: ao_two_e_integral_cgtos
-
-  ao_2e_cgtos_schwartz(1,1) = ao_two_e_integral_cgtos(1, 1, 1, 1)
-
-  !$OMP PARALLEL DO PRIVATE(i,k)                         &
-  !$OMP             DEFAULT(NONE)                        &
-  !$OMP             SHARED(ao_num, ao_2e_cgtos_schwartz) &
-  !$OMP             SCHEDULE(dynamic)
-  do i = 1, ao_num
-    do k = 1, i
-      ao_2e_cgtos_schwartz(i,k) = dsqrt(ao_two_e_integral_cgtos(i, i, k, k))
-      ao_2e_cgtos_schwartz(k,i) = ao_2e_cgtos_schwartz(i,k)
-    enddo
-  enddo
-  !$OMP END PARALLEL DO
-
-END_PROVIDER
+!BEGIN_PROVIDER [double precision, ao_2e_cgtos_schwartz, (ao_num, ao_num)]
+!
+!  BEGIN_DOC
+!  !  Needed to compute Schwartz inequalities
+!  END_DOC
+!
+!  implicit none
+!  integer          :: i, k
+!  double precision :: ao_two_e_integral_cgtos
+!
+!  ao_2e_cgtos_schwartz(1,1) = ao_two_e_integral_cgtos(1, 1, 1, 1)
+!
+!  !$OMP PARALLEL DO PRIVATE(i,k)                         &
+!  !$OMP             DEFAULT(NONE)                        &
+!  !$OMP             SHARED(ao_num, ao_2e_cgtos_schwartz) &
+!  !$OMP             SCHEDULE(dynamic)
+!  do i = 1, ao_num
+!    do k = 1, i
+!      ao_2e_cgtos_schwartz(i,k) = dsqrt(ao_two_e_integral_cgtos(i, i, k, k))
+!      ao_2e_cgtos_schwartz(k,i) = ao_2e_cgtos_schwartz(i,k)
+!    enddo
+!  enddo
+!  !$OMP END PARALLEL DO
+!
+!END_PROVIDER
 
 ! ---
 
