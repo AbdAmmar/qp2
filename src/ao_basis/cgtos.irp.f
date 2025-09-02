@@ -39,7 +39,6 @@ END_PROVIDER
 ! ---
 
  BEGIN_PROVIDER [complex*16, ao_expo_cgtos_ord_transp, (ao_prim_num_max, ao_num)]
-&BEGIN_PROVIDER [double precision, ao_expo_pw_ord_transp, (4, ao_prim_num_max, ao_num)]
 &BEGIN_PROVIDER [double precision, ao_expo_phase_ord_transp, (4, ao_prim_num_max, ao_num)]
 
   implicit none
@@ -52,7 +51,6 @@ END_PROVIDER
       ao_expo_cgtos_ord_transp(i,j) = ao_expo_cgtos_ord(j,i)
 
       do m = 1, 4
-        ao_expo_pw_ord_transp(m,i,j) = ao_expo_pw_ord(m,j,i)
         ao_expo_phase_ord_transp(m,i,j) = ao_expo_phase_ord(m,j,i)
       enddo
     enddo
@@ -64,14 +62,13 @@ END_PROVIDER
 
  BEGIN_PROVIDER [double precision, ao_coef_norm_cgtos_ord, (ao_num, ao_prim_num_max)]
 &BEGIN_PROVIDER [complex*16      , ao_expo_cgtos_ord, (ao_num, ao_prim_num_max)]
-&BEGIN_PROVIDER [double precision, ao_expo_pw_ord, (4, ao_num, ao_prim_num_max)]
 &BEGIN_PROVIDER [double precision, ao_expo_phase_ord, (4, ao_num, ao_prim_num_max)]
 
   implicit none
 
   integer          :: i, j, m
   integer          :: iorder(ao_prim_num_max)
-  double precision :: d(ao_prim_num_max,11)
+  double precision :: d(ao_prim_num_max,7)
 
   d = 0.d0
 
@@ -79,40 +76,34 @@ END_PROVIDER
 
     do j = 1, ao_prim_num(i)
       iorder(j) = j
+
       d(j,1) = ao_expo(i,j)
       d(j,2) = ao_coef_norm_cgtos(i,j)
       d(j,3) = ao_expo_im(i,j)
 
       do m = 1, 3
-        d(j,3+m) = ao_expo_pw(m,i,j)
+        d(j,3+m) = ao_expo_phase(m,i,j)
       enddo
-      d(j,7) = d(j,4) * d(j,4) + d(j,5) * d(j,5) + d(j,6) * d(j,6)
-
-      do m = 1, 3
-        d(j,7+m) = ao_expo_phase(m,i,j)
-      enddo
-      d(j,11) = d(j,8) + d(j,9) + d(j,10)
+      d(j,7) = d(j,4) + d(j,5) + d(j,6)
     enddo
 
     call dsort(d(1,1), iorder, ao_prim_num(i))
-    do j = 2, 11
+    do j = 2, 7
       call dset_order(d(1,j), iorder, ao_prim_num(i))
     enddo
 
     do j = 1, ao_prim_num(i)
+
       ao_expo_cgtos_ord     (i,j) = d(j,1) + (0.d0, 1.d0) * d(j,3)
       ao_coef_norm_cgtos_ord(i,j) = d(j,2)
 
       do m = 1, 4
-        ao_expo_pw_ord(m,i,j) = d(j,3+m)
-        ao_expo_phase_ord(m,i,j) = d(j,7+m)
+        ao_expo_phase_ord(m,i,j) = d(j,3+m)
       enddo
     enddo
   enddo
 
 END_PROVIDER
-
-
 
 ! ---
 
@@ -130,7 +121,6 @@ BEGIN_PROVIDER [double precision, ao_coef_cgtos_norm_ord_transp, (ao_prim_num_ma
 
 END_PROVIDER
 
-
 ! ---
 
 BEGIN_PROVIDER [double precision, ao_coef_norm_cgtos, (ao_num, ao_prim_num_max)]
@@ -139,8 +129,8 @@ BEGIN_PROVIDER [double precision, ao_coef_norm_cgtos, (ao_num, ao_prim_num_max)]
 
   integer          :: i, j, ii, m, powA(3), nz
   double precision :: norm
-  double precision :: kA2, phiA
-  complex*16       :: expo, expo_inv, C_Ae(3), C_Ap(3)
+  double precision :: phiA
+  complex*16       :: expo, expo_inv, C_A(3)
   complex*16       :: overlap_x, overlap_y, overlap_z
   complex*16       :: integ1, integ2, C1, C2
 
@@ -162,25 +152,21 @@ BEGIN_PROVIDER [double precision, ao_coef_norm_cgtos, (ao_num, ao_prim_num_max)]
 
         expo = ao_expo(i,j) + (0.d0, 1.d0) * ao_expo_im(i,j)
         expo_inv = (1.d0, 0.d0) / expo
+        phiA = ao_expo_phase(4,i,j)
         do m = 1, 3
-          C_Ap(m) = nucl_coord(ii,m)
-          C_Ae(m) = nucl_coord(ii,m) - (0.d0, 0.5d0) * expo_inv * ao_expo_pw(m,i,j)
+          C_A(m) = dcmplx(nucl_coord(ii,m))
         enddo
-        phiA = ao_expo_phase(1,i,j) + ao_expo_phase(2,i,j) + ao_expo_phase(3,i,j)
-        KA2 = ao_expo_pw(1,i,j) * ao_expo_pw(1,i,j) &
-            + ao_expo_pw(2,i,j) * ao_expo_pw(2,i,j) &
-            + ao_expo_pw(3,i,j) * ao_expo_pw(3,i,j)
 
-        C1 = zexp(-(0.d0, 2.d0) * phiA - 0.5d0 * expo_inv * KA2)
-        C2 = zexp(-(0.5d0, 0.d0) * real(expo_inv) * KA2)
+        C1 = zexp(-(0.d0, 2.d0) * phiA)
+        C2 = (1.d0, 0.d0)
 
-        call overlap_cgaussian_xyz(C_Ae, C_Ae, expo, expo, powA, powA, &
-                                   C_Ap, C_Ap, overlap_x, overlap_y, overlap_z, integ1, nz)
+        call overlap_cgaussian_xyz(C_A, C_A, expo, expo, powA, powA, &
+                                   C_A, C_A, overlap_x, overlap_y, overlap_z, integ1, nz)
 
-        call overlap_cgaussian_xyz(conjg(C_Ae), C_Ae, conjg(expo), expo, powA, powA, &
-                                   conjg(C_Ap), C_Ap, overlap_x, overlap_y, overlap_z, integ2, nz)
+        call overlap_cgaussian_xyz(conjg(C_A), C_A, conjg(expo), expo, powA, powA, &
+                                   conjg(C_A), C_A, overlap_x, overlap_y, overlap_z, integ2, nz)
 
-        norm = 2.d0 * real(C1 * integ1 + C2 * integ2)
+        norm = 0.5d0 * real(C1 * integ1 + C2 * integ2)
 
         !ao_coef_norm_cgtos(i,j) = 1.d0 / dsqrt(norm)
         ao_coef_norm_cgtos(i,j) = ao_coef(i,j) / dsqrt(norm)
@@ -197,5 +183,7 @@ BEGIN_PROVIDER [double precision, ao_coef_norm_cgtos, (ao_num, ao_prim_num_max)]
   enddo
 
 END_PROVIDER
+
+! ---
 
 
