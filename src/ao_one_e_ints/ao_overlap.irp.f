@@ -34,10 +34,11 @@
 
       do j = 1, ao_num
         do i = 1, ao_num
-          ao_overlap  (i,j) = ao_overlap_cgtos  (i,j) 
-          ao_overlap_x(i,j) = ao_overlap_cgtos_x(i,j)
-          ao_overlap_y(i,j) = ao_overlap_cgtos_y(i,j)
-          ao_overlap_z(i,j) = ao_overlap_cgtos_z(i,j)
+          ao_overlap(i,j) = ao_overlap_cgtos(i,j) 
+          ! not well defined for cGTOs
+          !ao_overlap_x(i,j) = ao_overlap_cgtos_x(i,j)
+          !ao_overlap_y(i,j) = ao_overlap_cgtos_y(i,j)
+          !ao_overlap_z(i,j) = ao_overlap_cgtos_z(i,j)
         enddo
       enddo
 
