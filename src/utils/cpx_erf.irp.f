@@ -361,7 +361,7 @@ subroutine zboysfun00_2(z, val)
   else
 
     ! intermediate |z|
-    val = sqpio2 / zsqrt(z) - 0.5d0 * zexp(-z) * sum(ff(1:22)/(z+pp(1:22)))
+    val = sqpio2 / zsqrt(z) - (0.5d0, 0.d0) * zexp(-z) * sum(ff(1:22)/(z+pp(1:22)))
 
   endif
 
@@ -558,7 +558,7 @@ subroutine zboysfun00nrp(z, val)
         zsum = zsum + ww(k) * (zz - uu(k)) / (qq(k) + z)
       else
         q = z + qq(k)
-        p = q * (0.041666666666666664d0*q * (q * (0.2d0*q - 1.d0) + 4.d0) - 0.5d0) + 1.d0
+        p = q * (q * (q * (0.008333333333333333d0*q - 0.041666666666666664d0) + 0.16666666666666666d0) - 0.5d0) + 1.d0
         zsum = zsum + ww(k) * p * zz
       endif
     enddo
@@ -572,8 +572,7 @@ subroutine zboysfun00nrp(z, val)
         zsum = zsum + ww(k) * (zz - uu1(k)) / (qq1(k) + z)
       else
         q = z + qq1(k)
-        !p = 1.0d0 - 0.5d0*q + q*q/6.0d0 - q*q*q/24.0d0 + q*q*q*q/120.0d0
-        p = q * (0.041666666666666664d0*q * (q * (0.2d0*q - 1.d0) + 4.d0) - 0.5d0) + 1.d0
+        p = q * (q * (q * (0.008333333333333333d0*q - 0.041666666666666664d0) + 0.16666666666666666d0) - 0.5d0) + 1.d0
         zsum = zsum + ww(k) * p * zz
       endif
     enddo

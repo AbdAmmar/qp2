@@ -464,7 +464,7 @@ complex*16 function NAI_pol_mult_cgtos(Ae_center, Be_center, power_A, power_B, a
 
   complex*16, external         :: V_n_e_cgtos
   complex*16, external         :: crint_sum
-  complex*16, external         :: crint_1
+  complex*16, external         :: crint_2
 
 
 
@@ -516,7 +516,7 @@ complex*16 function NAI_pol_mult_cgtos(Ae_center, Be_center, power_A, power_B, a
 
   n_pt = 2 * ((power_A(1) + power_B(1)) + (power_A(2) + power_B(2)) + (power_A(3) + power_B(3)))
   if(n_pt == 0) then
-    NAI_pol_mult_cgtos = coeff * crint_1(0, const)
+    NAI_pol_mult_cgtos = coeff * crint_2(0, const)
     return
   endif
 
