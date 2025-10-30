@@ -526,7 +526,7 @@ complex*16 function crint_2(n, rho)
 
   endif
 
-  debug_crint = .true.
+  debug_crint = .false.
   if(debug_crint) then
     write(6666,*) n, real(rho), aimag(rho), real(crint_2), aimag(crint_2)
   endif
@@ -703,7 +703,7 @@ complex*16 function crint_sum(n_pt_out, rho, d1)
 
   call crint_2_vec(n_max, rho, vals)
 
-  debug_crint = .true.
+  debug_crint = .false.
   if(debug_crint) then
     do i = 0, n_pt_out, 2
       write(7777,*) shiftr(i, 1), real(rho), aimag(rho), real(vals(shiftr(i, 1))), aimag(vals(shiftr(i, 1)))

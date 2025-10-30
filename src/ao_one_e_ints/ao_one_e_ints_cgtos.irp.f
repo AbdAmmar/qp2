@@ -442,9 +442,16 @@ complex*16 function NAI_pol_mult_cgtos(Ae_center, Be_center, power_A, power_B, a
 
   BEGIN_DOC
   !
-  ! Computes the electron-nucleus attraction with two primitves cgtos.
+  ! Computes the electron-nucleus attraction with two primitves cGTOs
   !
-  ! :math:`\langle g_i | \frac{1}{|r-R_c|} | g_j \rangle`
+  !  $\langle G_A | \frac{1}{|\bm{r} - \bm{C}|} | G_B \rangle$
+  !    
+  !    G_A(\bm{r}) = (x - X_A)^{a(1)} (y - Y_A)^{a(2)} (z - Z_A)^{a(3)} e^{-\alpha (\bm{r} - \bm{A})^2}
+  !    G_B(\bm{r}) = (x - X_B)^{b(1)} (y - Y_B)^{b(2)} (z - Z_B)^{b(3)} e^{-\beta  (\bm{r} - \bm{B})^2}
+  !
+  !  with:
+  !        \bm{A} = Ae_center(1:3), a(1:3) = power_A(1:3)
+  !        \bm{B} = Be_center(1:3), b(1:3) = power_B(1:3)
   !
   END_DOC
 
