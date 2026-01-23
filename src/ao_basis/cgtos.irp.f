@@ -123,63 +123,134 @@ END_PROVIDER
 
 ! ---
 
-BEGIN_PROVIDER [double precision, ao_coef_norm_cgtos, (ao_num, ao_prim_num_max)]
+ BEGIN_PROVIDER [double precision, ao_coef_norm_cgtos, (ao_num, ao_prim_num_max)]
+&BEGIN_PROVIDER [double precision, ao_coef_norm_factor_cgtos, (ao_num)]
 
   implicit none
 
-  integer          :: i, j, ii, m, powA(3), nz
-  double precision :: norm
-  double precision :: phiA
-  complex*16       :: expo, expo_inv, C_A(3)
+  integer          :: i, j, k, ii, m, powA(3), nz
+  double precision :: norm, c
+  double precision :: phiA1, phiA2
+  complex*16       :: C_A(3), expo1, expo2
   complex*16       :: overlap_x, overlap_y, overlap_z
   complex*16       :: integ1, integ2, C1, C2
 
+  double precision, allocatable :: self_overlap(:)
+
+
   nz = 100
+
+  C_A(1) = (0.d0, 0.d0)
+  C_A(2) = (0.d0, 0.d0)
+  C_A(3) = (0.d0, 0.d0)
 
   ao_coef_norm_cgtos = 0.d0
 
-  do i = 1, ao_num
+  ! GAMESS convention for primitive factors
+  if(primitives_normalized) then
 
-    ii = ao_nucl(i)
-    powA(1) = ao_power(i,1)
-    powA(2) = ao_power(i,2)
-    powA(3) = ao_power(i,3)
- 
-    if(primitives_normalized) then
+    do i = 1, ao_num
 
-      ! Normalization of the primitives
+      ii = ao_nucl(i)
+      powA(1) = ao_power(i,1)
+      powA(2) = ao_power(i,2)
+      powA(3) = ao_power(i,3)
+
       do j = 1, ao_prim_num(i)
 
-        expo = ao_expo(i,j) + (0.d0, 1.d0) * ao_expo_im(i,j)
-        expo_inv = (1.d0, 0.d0) / expo
-        phiA = ao_expo_phase(4,i,j)
-        do m = 1, 3
-          C_A(m) = dcmplx(nucl_coord(ii,m))
-        enddo
+        expo1 = ao_expo(i,j) + (0.d0, 1.d0) * ao_expo_im(i,j)
+        phiA1 = ao_expo_phase(1,i,j) + ao_expo_phase(2,i,j) + ao_expo_phase(3,i,j)
 
-        C1 = zexp(-(0.d0, 2.d0) * phiA)
+        C1 = zexp(-(0.d0, 2.d0) * phiA1)
         C2 = (1.d0, 0.d0)
 
-        call overlap_cgaussian_xyz(C_A, C_A, expo, expo, powA, powA, &
+        call overlap_cgaussian_xyz(C_A, C_A, expo1, expo1, powA, powA, &
                                    C_A, C_A, overlap_x, overlap_y, overlap_z, integ1, nz)
 
-        call overlap_cgaussian_xyz(conjg(C_A), C_A, conjg(expo), expo, powA, powA, &
+        call overlap_cgaussian_xyz(conjg(C_A), C_A, conjg(expo1), expo1, powA, powA, &
                                    conjg(C_A), C_A, overlap_x, overlap_y, overlap_z, integ2, nz)
 
         norm = 0.5d0 * real(C1 * integ1 + C2 * integ2)
 
-        !ao_coef_norm_cgtos(i,j) = 1.d0 / dsqrt(norm)
         ao_coef_norm_cgtos(i,j) = ao_coef(i,j) / dsqrt(norm)
       enddo
+    enddo
 
-    else
+  else
 
+    do i = 1, ao_num
       do j = 1, ao_prim_num(i)
         ao_coef_norm_cgtos(i,j) = ao_coef(i,j)
       enddo
+    enddo
 
-    endif ! primitives_normalized
+  endif ! primitives_normalized
 
+
+
+  if (ao_normalized) then
+
+    allocate(self_overlap(ao_num))
+
+    do i = 1, ao_num
+      ii = ao_nucl(i)
+      powA(1) = ao_power(i,1)
+      powA(2) = ao_power(i,2)
+      powA(3) = ao_power(i,3)
+  
+      self_overlap(i) = 0.d0
+      do j = 1, ao_prim_num(i)
+
+        expo1 = ao_expo(i,j) + (0.d0, 1.d0) * ao_expo_im(i,j)
+        phiA1 = ao_expo_phase(1,i,j) + ao_expo_phase(2,i,j) + ao_expo_phase(3,i,j)
+
+        do k = 1, j-1
+
+          expo2 = ao_expo(i,k) + (0.d0, 1.d0) * ao_expo_im(i,k)
+          phiA2 = ao_expo_phase(1,i,k) + ao_expo_phase(2,i,k) + ao_expo_phase(3,i,k)
+
+          C1 = zexp((0.d0, 1.d0) * (-phiA1 - phiA2))
+          C2 = zexp((0.d0, 1.d0) * ( phiA1 - phiA2))
+
+          call overlap_cgaussian_xyz(C_A, C_A, expo1, expo2, powA, powA, &
+                                     C_A, C_A, overlap_x, overlap_y, overlap_z, integ1, nz)
+          call overlap_cgaussian_xyz(conjg(C_A), C_A, conjg(expo1), expo2, powA, powA, &
+                                     conjg(C_A), C_A, overlap_x, overlap_y, overlap_z, integ2, nz)
+          c = 0.5d0 * real(C1 * integ1 + C2 * integ2)
+
+          self_overlap(i) = self_overlap(i) + 2.d0 * c * ao_coef_norm_cgtos(i,j) * ao_coef_norm_cgtos(i,k)
+        enddo
+
+        C1 = zexp(-(0.d0, 2.d0) * phiA1)
+        C2 = (1.d0, 0.d0)
+
+        call overlap_cgaussian_xyz(C_A, C_A, expo1, expo1, powA, powA, &
+                                   C_A, C_A, overlap_x, overlap_y, overlap_z, integ1, nz)
+        call overlap_cgaussian_xyz(conjg(C_A), C_A, conjg(expo1), expo1, powA, powA, &
+                                   conjg(C_A), C_A, overlap_x, overlap_y, overlap_z, integ2, nz)
+        c = 0.5d0 * real(C1 * integ1 + C2 * integ2)
+
+        self_overlap(i) = self_overlap(i) + c * ao_coef_norm_cgtos(i,j) * ao_coef_norm_cgtos(i,k)
+      enddo
+    enddo
+
+    do i = 1, ao_num
+      ao_coef_norm_factor_cgtos(i) = 1.d0 / dsqrt(self_overlap(i))
+    enddo
+
+    deallocate(self_overlap)
+
+  else
+
+    do i = 1, ao_num
+      ao_coef_norm_factor_cgtos(i) = 1.d0
+    enddo
+  endif
+
+  do i = 1, ao_num
+    do j = 1, ao_prim_num(i)
+      ao_coef_norm_cgtos(i,j) = ao_coef_norm_cgtos(i,j) * ao_coef_norm_factor_cgtos(i)
+    enddo
   enddo
 
 END_PROVIDER
