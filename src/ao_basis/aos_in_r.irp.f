@@ -94,35 +94,73 @@ subroutine give_all_aos_at_r(r, tmp_array)
   double precision              :: dx, dy, dz, r2
   double precision              :: dx2, dy2, dz2
   double precision              :: c_ao(3)
-  double precision              :: beta
+  double precision              :: beta, phase
+  complex*16                    :: beta_cgtos
 
-  do i = 1, nucl_num
+  if (use_cgtos) then
 
-    c_ao(1:3) = nucl_coord(i,1:3)
-    dx = r(1) - c_ao(1)
-    dy = r(2) - c_ao(2)
-    dz = r(3) - c_ao(3)
-    r2 = dx*dx + dy*dy + dz*dz
+    do i = 1, nucl_num
+  
+      c_ao(1:3) = nucl_coord(i,1:3)
+      dx = r(1) - c_ao(1)
+      dy = r(2) - c_ao(2)
+      dz = r(3) - c_ao(3)
+      r2 = dx*dx + dy*dy + dz*dz
+  
+      do j = 1, Nucl_N_Aos(i)
+  
+        k = Nucl_Aos_transposed(j,i) ! index of the ao in the ordered format
+        p_ao(1:3) = ao_power_ordered_transp_per_nucl(1:3,j,i)
+        dx2 = dx**p_ao(1)
+        dy2 = dy**p_ao(2)
+        dz2 = dz**p_ao(3)
+  
+        tmp_array(k) = 0.d0
+        do l = 1, ao_prim_num(k)
 
-    do j = 1, Nucl_N_Aos(i)
+          beta_cgtos = ao_expo_cgtos_ord_transp_per_nucl(l,j,i)
+          if(real(beta_cgtos)*r2 .gt. 50.d0) cycle
 
-      k = Nucl_Aos_transposed(j,i) ! index of the ao in the ordered format
-      p_ao(1:3) = ao_power_ordered_transp_per_nucl(1:3,j,i)
-      dx2 = dx**p_ao(1)
-      dy2 = dy**p_ao(2)
-      dz2 = dz**p_ao(3)
-
-      tmp_array(k) = 0.d0
-      do l = 1, ao_prim_num(k)
-        beta = ao_expo_ordered_transp_per_nucl(l,j,i)
-        if(beta*r2.gt.50.d0) cycle
-
-        tmp_array(k) += ao_coef_normalized_ordered_transp_per_nucl(l,j,i) * dexp(-beta*r2)
+          phase = ao_expo_phase_ord_transp_per_nucl(l,j,i)
+  
+          tmp_array(k) += ao_coef_cgtos_norm_ord_transp_per_nucl(l,j,i) * real(zexp(-beta_cgtos*r2 - phase*(0.d0, 1.d0)))
+        enddo
+  
+        tmp_array(k) = tmp_array(k) * dx2 * dy2 * dz2
       enddo
-
-      tmp_array(k) = tmp_array(k) * dx2 * dy2 * dz2
     enddo
-  enddo
+
+  else
+
+    do i = 1, nucl_num
+  
+      c_ao(1:3) = nucl_coord(i,1:3)
+      dx = r(1) - c_ao(1)
+      dy = r(2) - c_ao(2)
+      dz = r(3) - c_ao(3)
+      r2 = dx*dx + dy*dy + dz*dz
+  
+      do j = 1, Nucl_N_Aos(i)
+  
+        k = Nucl_Aos_transposed(j,i) ! index of the ao in the ordered format
+        p_ao(1:3) = ao_power_ordered_transp_per_nucl(1:3,j,i)
+        dx2 = dx**p_ao(1)
+        dy2 = dy**p_ao(2)
+        dz2 = dz**p_ao(3)
+  
+        tmp_array(k) = 0.d0
+        do l = 1, ao_prim_num(k)
+          beta = ao_expo_ordered_transp_per_nucl(l,j,i)
+          if(beta*r2.gt.50.d0) cycle
+  
+          tmp_array(k) += ao_coef_normalized_ordered_transp_per_nucl(l,j,i) * dexp(-beta*r2)
+        enddo
+  
+        tmp_array(k) = tmp_array(k) * dx2 * dy2 * dz2
+      enddo
+    enddo
+
+  endif
 
   return
 end

@@ -66,3 +66,59 @@ BEGIN_PROVIDER [ double precision, ao_coef_normalized_ordered_transp_per_nucl, (
 
 END_PROVIDER
 
+! ---
+
+BEGIN_PROVIDER [complex*16, ao_expo_cgtos_ord_transp_per_nucl, (ao_prim_num_max,N_AOs_max,nucl_num)]
+
+  implicit none
+  integer :: i, j, k, l
+
+  do i = 1, nucl_num
+    do j = 1, Nucl_N_Aos(i)
+      k = Nucl_Aos_transposed(j,i)
+      do l = 1, ao_prim_num(k)
+        ao_expo_cgtos_ord_transp_per_nucl(l,j,i) = ao_expo_cgtos_ord_transp(l,k)
+      enddo
+    enddo
+  enddo
+
+END_PROVIDER
+
+! ---
+
+BEGIN_PROVIDER [double precision, ao_expo_phase_ord_transp_per_nucl, (ao_prim_num_max,N_AOs_max,nucl_num)]
+
+  implicit none
+  integer :: i, j, k, l
+
+  do i = 1, nucl_num
+    do j = 1, Nucl_N_Aos(i)
+      k = Nucl_Aos_transposed(j,i)
+      do l = 1, ao_prim_num(k)
+        ao_expo_phase_ord_transp_per_nucl(l,j,i) = ao_expo_phase_ord_transp(4,l,k)
+      enddo
+    enddo
+  enddo
+
+END_PROVIDER
+
+! ---
+
+BEGIN_PROVIDER [double precision, ao_coef_cgtos_norm_ord_transp_per_nucl, (ao_prim_num_max,N_AOs_max,nucl_num)]
+
+  implicit none
+  integer :: i, j, k, l
+
+  do i = 1, nucl_num
+    do j = 1, Nucl_N_Aos(i)
+      k = Nucl_Aos_transposed(j,i)
+      do l = 1, ao_prim_num(k)
+        ao_coef_cgtos_norm_ord_transp_per_nucl(l,j,i) = ao_coef_cgtos_norm_ord_transp(l,k)
+      enddo
+    enddo
+  enddo
+
+END_PROVIDER
+
+! ---
+
